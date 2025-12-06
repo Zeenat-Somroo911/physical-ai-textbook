@@ -1,0 +1,201 @@
+/**
+ * Custom CSS for Physical AI & Humanoid Robotics Textbook
+ * Dark theme optimized styling
+ */
+
+/* Import RTL support for Urdu translation */
+@import './rtl.css';
+
+:root {
+  --ifm-color-primary: #00d4ff;
+  --ifm-color-primary-dark: #00bfe6;
+  --ifm-color-primary-darker: #00b5d9;
+  --ifm-color-primary-darkest: #0095b3;
+  --ifm-color-primary-light: #1ad9ff;
+  --ifm-color-primary-lighter: #26dcff;
+  --ifm-color-primary-lightest: #4de4ff;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  --ifm-background-color: #1e1e1e;
+  --ifm-background-surface-color: #252525;
+}
+
+/* Dark theme (default) */
+/* Import Outfit font */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+/* Dark theme (default) */
+[data-theme='dark'] {
+  --ifm-font-family-base: 'Outfit', sans-serif;
+  --ifm-color-primary: #00d4ff;
+  --ifm-color-primary-dark: #00bfe6;
+  --ifm-color-primary-darker: #00b5d9;
+  --ifm-color-primary-darkest: #0095b3;
+  --ifm-color-primary-light: #1ad9ff;
+  --ifm-color-primary-lighter: #26dcff;
+  --ifm-color-primary-lightest: #4de4ff;
+
+  --docusaurus-highlighted-code-line-bg: rgba(0, 212, 255, 0.1);
+  --ifm-background-color: #050505;
+  /* Darker background */
+  --ifm-background-surface-color: #121212;
+
+  /* Glassmorphism Navbar vars */
+  --ifm-navbar-background-color: rgba(10, 10, 10, 0.7);
+  --ifm-navbar-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+
+  --ifm-footer-background-color: #000000;
+  --ifm-card-background-color: #121212;
+  --ifm-font-color-base: #e0e0e0;
+  --ifm-heading-color: #ffffff;
+}
+
+/* Navbar GlassEffect */
+.navbar {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  height: 4rem;
+  /* Fix height for absolute positioning stability */
+}
+
+.navbar__inner {
+  max-width: 100%;
+  position: relative;
+  /* Context for absolute positioning */
+}
+
+/* 1. Force the container of Left Items (including Brand) to fill space and center content */
+.navbar__items {
+  flex: 1;
+  justify-content: center;
+}
+
+/* 2. Pull the Brand (Logo) back to the left using absolute positioning */
+.navbar__brand {
+  position: absolute;
+  left: var(--ifm-navbar-padding-horizontal);
+  margin-right: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* 3. Pull the Right Items to the right using absolute positioning */
+.navbar__items--right {
+  position: absolute;
+  right: var(--ifm-navbar-padding-horizontal);
+  flex: 0 0 auto;
+  width: auto;
+  justify-content: flex-end;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: 100%;
+}
+
+/* Ensure all right-side items are vertically centered and inline */
+.navbar__items--right>* {
+  display: flex !important;
+  align-items: center !important;
+  height: 36px !important;
+  margin: 0 !important;
+}
+
+.navbar-signup-opts {
+  font-weight: 600 !important;
+  color: #000 !important;
+  background: linear-gradient(90deg, #00d4ff 0%, #0095b3 100%) !important;
+  border: none !important;
+  transition: all 0.3s ease !important;
+  height: 36px !important;
+  padding: 0 1.25rem !important;
+  border-radius: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
+}
+
+.navbar-signup-opts:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
+}
+
+/* Style for GitHub Link to match alignment */
+.navbar-github-link {
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 0.5rem !important;
+  transition: opacity 0.3s;
+  height: 36px !important;
+}
+
+.navbar-github-link:hover {
+  opacity: 0.8;
+}
+
+/* Override TranslateButton default styles when in Navbar to fit better */
+.navbar__items--right .translateContainer {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  height: 36px !important;
+}
+
+.navbar__items--right .translateButton {
+  height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 0.75rem !important;
+}
+
+
+/* Hide these adjustments on mobile to preserve sidebar behavior */
+@media (max-width: 996px) {
+  .navbar__brand {
+    position: static;
+  }
+
+  .navbar__items {
+    justify-content: flex-start;
+  }
+
+  .navbar__items--right {
+    position: static;
+  }
+}
+
+/* Light theme */
+[data-theme='light'] {
+  --ifm-color-primary: #0066cc;
+  --ifm-color-primary-dark: #005bb8;
+  --ifm-color-primary-darker: #0056ad;
+  --ifm-color-primary-darkest: #00478f;
+  --ifm-color-primary-light: #1a75d1;
+  --ifm-color-primary-lighter: #267dd6;
+  --ifm-color-primary-lightest: #4d94e0;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+/* Hero section styling */
+.hero {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+}
+
+/* Code block styling */
+.prism-code {
+  background-color: #1e1e1e !important;
+}
+
+/* Custom button styling */
+.button--primary {
+  background-color: var(--ifm-color-primary);
+  border-color: var(--ifm-color-primary);
+}
+
+.button--primary:hover {
+  background-color: var(--ifm-color-primary-dark);
+  border-color: var(--ifm-color-primary-dark);
+}

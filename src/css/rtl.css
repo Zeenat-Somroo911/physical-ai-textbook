@@ -1,0 +1,216 @@
+/**
+ * RTL (Right-to-Left) Support for Urdu Translation
+ * 
+ * This file provides RTL layout support and proper Urdu font styling.
+ */
+
+/* Import Urdu-friendly fonts */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Noto+Sans+Arabic:wght@400;600;700&display=swap');
+
+/* RTL Root Styles */
+html[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="ltr"] {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Urdu Content Container */
+.rtl-content {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Noto Nastaliq Urdu', 'Noto Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif;
+  font-size: 1.1em;
+  line-height: 1.8;
+}
+
+/* Headings in RTL */
+.rtl-content h1,
+.rtl-content h2,
+.rtl-content h3,
+.rtl-content h4,
+.rtl-content h5,
+.rtl-content h6 {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Noto Nastaliq Urdu', 'Noto Sans Arabic', sans-serif;
+  font-weight: 700;
+}
+
+/* Paragraphs */
+.rtl-content p {
+  direction: rtl;
+  text-align: right;
+  margin: 1em 0;
+}
+
+/* Lists */
+.rtl-content ul,
+.rtl-content ol {
+  direction: rtl;
+  text-align: right;
+  padding-right: 2em;
+  padding-left: 0;
+}
+
+.rtl-content li {
+  direction: rtl;
+  text-align: right;
+  margin: 0.5em 0;
+}
+
+/* Code blocks - Keep LTR for code */
+.rtl-content pre,
+.rtl-content code {
+  direction: ltr;
+  text-align: left;
+  font-family: 'Courier New', Courier, monospace;
+  unicode-bidi: embed;
+}
+
+.rtl-content pre {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Inline code */
+.rtl-content code:not(pre code) {
+  direction: ltr;
+  unicode-bidi: embed;
+  display: inline-block;
+}
+
+/* Blockquotes */
+.rtl-content blockquote {
+  direction: rtl;
+  text-align: right;
+  border-right: 4px solid var(--ifm-color-primary);
+  border-left: none;
+  padding-right: 1em;
+  padding-left: 0;
+  margin-right: 0;
+  margin-left: 1em;
+}
+
+/* Tables */
+.rtl-content table {
+  direction: rtl;
+}
+
+.rtl-content th,
+.rtl-content td {
+  text-align: right;
+}
+
+/* Links */
+.rtl-content a {
+  direction: rtl;
+  unicode-bidi: embed;
+}
+
+/* Images */
+.rtl-content img {
+  display: block;
+  margin: 1em auto;
+}
+
+/* Navigation and UI elements - Keep LTR */
+.rtl-content nav,
+.rtl-content .navbar,
+.rtl-content .sidebar,
+.rtl-content button:not(.rtl-content button),
+.rtl-content .button {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Docusaurus specific overrides */
+.rtl-content .markdown {
+  direction: rtl;
+  text-align: right;
+}
+
+.rtl-content .markdown > h1,
+.rtl-content .markdown > h2,
+.rtl-content .markdown > h3,
+.rtl-content .markdown > h4,
+.rtl-content .markdown > h5,
+.rtl-content .markdown > h6 {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Code examples - Keep LTR */
+.rtl-content .prism-code,
+.rtl-content .code-block,
+.rtl-content .highlight {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: embed;
+}
+
+/* Admonitions (Note, Tip, Warning, etc.) */
+.rtl-content .admonition {
+  direction: rtl;
+  text-align: right;
+}
+
+.rtl-content .admonition-title {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Tabs */
+.rtl-content .tabs {
+  direction: rtl;
+}
+
+.rtl-content .tabs__item {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Smooth transition when switching languages */
+article {
+  transition: direction 0.3s ease, text-align 0.3s ease;
+}
+
+/* Urdu-specific typography improvements */
+.rtl-content {
+  letter-spacing: 0.02em;
+  word-spacing: 0.1em;
+}
+
+/* Ensure proper rendering of Urdu characters */
+.rtl-content {
+  font-feature-settings: "kern" 1, "liga" 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .rtl-content {
+    font-size: 1em;
+    line-height: 1.7;
+  }
+}
+
+/* Print styles for RTL */
+@media print {
+  .rtl-content {
+    direction: rtl;
+    text-align: right;
+  }
+  
+  .rtl-content pre,
+  .rtl-content code {
+    direction: ltr;
+    text-align: left;
+  }
+}
+

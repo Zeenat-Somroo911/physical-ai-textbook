@@ -1,0 +1,21 @@
+/**
+ * TranslateButton Styles
+ */
+
+.translateContainer {
+  display: flex;
+  align-items: center;
+}
+
+.compactButton {
+  gap: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.compactButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
