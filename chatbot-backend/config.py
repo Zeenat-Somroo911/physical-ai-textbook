@@ -43,6 +43,19 @@ class Settings(BaseSettings):
         env="OPENAI_EMBEDDING_MODEL",
         description="OpenAI model for embeddings"
     )
+
+    # Gemini Configuration
+    gemini_api_key: Optional[str] = Field(None, env="GEMINI_API_KEY", description="Google Gemini API key")
+    gemini_model: str = Field(
+        default="gemini-2.0-flash-exp",
+        env="GEMINI_MODEL",
+        description="Google Gemini model"
+    )
+    gemini_embedding_model: str = Field(
+        default="models/embedding-001",
+        env="GEMINI_EMBEDDING_MODEL",
+        description="Google Gemini embedding model"
+    )
     
     # Application Configuration
     app_name: str = Field(

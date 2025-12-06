@@ -43,6 +43,9 @@ wheels/
 *.egg
 MANIFEST
 
+*generated-content/
+.generated-content/
+
 # Virtual environments
 venv/
 env/

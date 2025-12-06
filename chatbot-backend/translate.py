@@ -192,9 +192,66 @@ def translate_with_google(content: str, target_lang: str = "ur") -> str:
         )
 
 
+
+def translate_with_gemini(content: str, target_lang: str = "ur") -> str:
+    """
+    Translate content using Google Gemini API.
+    
+    Args:
+        content: Content to translate
+        target_lang: Target language code
+        
+    Returns:
+        Translated content
+    """
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=settings.gemini_api_key)
+        model = genai.GenerativeModel('gemini-pro')
+        
+        # Map language codes to names
+        lang_names = {
+            "ur": "Urdu",
+            "en": "English",
+            "ar": "Arabic",
+            "hi": "Hindi"
+        }
+        target_lang_name = lang_names.get(target_lang, "Urdu")
+        
+        prompt = f"""Translate the following technical content to {target_lang_name}. 
+
+IMPORTANT INSTRUCTIONS:
+1. Maintain ALL markdown formatting (headings, code blocks, lists, etc.)
+2. Keep code blocks in English (do NOT translate code)
+3. Keep technical terms in English if commonly used (e.g., ROS, API, Python)
+4. Translate explanations and descriptions naturally
+5. Preserve all special characters and formatting
+6. Maintain the same structure and hierarchy
+
+CONTENT TO TRANSLATE:
+{content}
+
+Return ONLY the translated content with all formatting preserved."""
+
+        response = model.generate_content(prompt)
+        translated = response.text.strip()
+        
+        # Remove markdown code blocks if present
+        if translated.startswith("```"):
+            lines = translated.split("\n")
+            if len(lines) > 2:
+                translated = "\n".join(lines[1:-1])
+        
+        return translated
+    
+    except Exception as e:
+        logger.error(f"Gemini translation error: {e}", exc_info=True)
+        raise
+
+
 def translate_content(content: str, target_lang: str = "ur") -> tuple[str, str]:
     """
-    Translate content using OpenAI first, fallback to Google Translate.
+    Translate content using Gemini first, then OpenAI, fallback to Google Translate.
     
     Args:
         content: Content to translate
@@ -203,23 +260,32 @@ def translate_content(content: str, target_lang: str = "ur") -> tuple[str, str]:
     Returns:
         Tuple of (translated_content, method_used)
     """
-    # Try OpenAI first
-    try:
-        translated = translate_with_openai(content, target_lang)
-        return translated, "openai"
-    except Exception as e:
-        logger.warning(f"OpenAI translation failed, trying Google Translate: {e}")
-        
-        # Fallback to Google Translate
+    # Try Gemini first (Free Tier)
+    if settings.gemini_api_key:
         try:
-            translated = translate_with_google(content, target_lang)
-            return translated, "google"
-        except Exception as e2:
-            logger.error(f"Both translation methods failed: {e2}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Translation failed with both methods: {str(e2)}"
-            )
+            translated = translate_with_gemini(content, target_lang)
+            return translated, "gemini"
+        except Exception as e:
+            logger.warning(f"Gemini translation failed, trying OpenAI: {e}")
+
+    # Try OpenAI second
+    if settings.openai_api_key:
+        try:
+            translated = translate_with_openai(content, target_lang)
+            return translated, "openai"
+        except Exception as e:
+            logger.warning(f"OpenAI translation failed, trying Google Translate: {e}")
+            
+    # Fallback to Google Translate
+    try:
+        translated = translate_with_google(content, target_lang)
+        return translated, "google"
+    except Exception as e2:
+        logger.error(f"All translation methods failed: {e2}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Translation failed with all methods: {str(e2)}"
+        )
 
 
 # ============================================================================

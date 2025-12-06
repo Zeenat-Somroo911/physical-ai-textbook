@@ -111,6 +111,11 @@ export default function PersonalizeButton({
 
     try {
       const contentToPersonalize = getContent();
+      console.log(`Sending content for personalization: ${contentToPersonalize.length} chars`);
+
+      // Add timeout to prevent infinite hanging (120s for AI processing)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s timeout
 
       const response = await fetch(`${API_URL}/personalize`, {
         method: 'POST',
@@ -123,24 +128,81 @@ export default function PersonalizeButton({
           chapter_path: chapterPath,
           content: contentToPersonalize,
         }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData;
+        try {
+          const text = await response.text();
+          console.error('Backend Error Response:', text);
+          errorData = JSON.parse(text);
+        } catch (e) {
+          errorData = { detail: `Status ${response.status}: ${response.statusText}` };
+        }
         throw new Error(errorData.detail || 'Personalization failed');
       }
 
       const data = await response.json();
+      console.log('🎯 Personalization API Response:', {
+        hasPersonalizedContent: !!data.personalized_content,
+        contentLength: data.personalized_content?.length,
+        hasOnContentChangeCallback: !!onContentChange
+      });
       setIsPersonalized(true);
 
       if (onContentChange) {
+        console.log('🎯 Calling onContentChange with personalized content...');
         onContentChange(data.personalized_content);
+        console.log('✅ onContentChange called successfully');
+      } else {
+        console.error('❌ onContentChange callback is not defined!');
       }
+
+      // Add visual indicator to article
+      setTimeout(() => {
+        const article = document.querySelector('article');
+        if (article) {
+          article.style.background = 'linear-gradient(to right, rgba(37, 99, 235, 0.03), rgba(59, 130, 246, 0.03))';
+          article.style.borderLeft = '3px solid #3b82f6';
+          article.style.paddingLeft = '1.5rem';
+          article.style.transition = 'all 0.3s ease';
+
+          // Add "Personalized for You" badge
+          if (!article.querySelector('.personalized-badge')) {
+            const badge = document.createElement('div');
+            badge.className = 'personalized-badge';
+            badge.style.cssText = `
+              display: inline-block;
+              background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+              color: white;
+              padding: 0.4rem 1rem;
+              border-radius: 16px;
+              font-size: 0.85rem;
+              font-weight: 600;
+              margin-bottom: 1rem;
+              box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
+            `;
+            badge.textContent = '✨ Personalized for You';
+            article.insertBefore(badge, article.firstChild);
+          }
+        }
+      }, 100);
+
       toast.success('Content personalized! 🚀', { id: loadingToast });
 
     } catch (err) {
-      console.error('Personalization error:', err);
-      toast.error(err.message || 'Failed to personalize.', { id: loadingToast });
+      console.error('Personalization error DETAILS:', err);
+      // Attempt to read parsing error response
+      let errorMsg = err.message || 'Failed to personalize.';
+
+      // Special handling for timeout
+      if (err.name === 'AbortError') {
+        errorMsg = 'Request timed out. Content might be too large or server is slow. Please try again.';
+      }
+
+      toast.error(`Error: ${errorMsg}`, { id: loadingToast });
     } finally {
       setIsLoading(false);
     }
@@ -168,10 +230,17 @@ export default function PersonalizeButton({
 
       setIsPersonalized(false);
 
+      // Clear personalized content to show original
       if (onContentChange) {
-        onContentChange(getContent());
+        onContentChange(null);
       }
+
       toast.success('Original content restored', { id: loadingToast });
+
+      // Hard reload to completely clear all state and styling
+      setTimeout(() => {
+        window.location.reload(true);
+      }, 800);
 
     } catch (err) {
       console.error('Reset error:', err);

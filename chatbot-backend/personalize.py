@@ -137,57 +137,34 @@ def get_user_profile_context(user: dict) -> str:
 
 def generate_personalization_prompt(content: str, user_context: str) -> str:
     """
-    Generate prompt for OpenAI to personalize content.
-    
-    Args:
-        content: Original chapter content
-        user_context: User profile context
-        
-    Returns:
-        Complete prompt for OpenAI
+    Generate prompt for Gemini to personalize content with VISIBLE changes.
     """
-    prompt = f"""You are an expert educational content personalizer. Adjust this robotics textbook chapter content based on the user's profile.
+    prompt = f"""You are an expert educational content personalizer. Your task is to COMPLETELY REWRITE this robotics textbook content to make it much more beginner-friendly and detailed.
 
 USER PROFILE:
 {user_context}
 
-PERSONALIZATION RULES:
-1. If user is BEGINNER:
-   - Simplify technical explanations
-   - Add more step-by-step examples
-   - Include basic concepts they might not know
-   - Use simpler language
-   - Add more context and background information
+CRITICAL REQUIREMENTS - YOU MUST:
+1. Make the content AT LEAST 40% LONGER than the original
+2. Add 2-3 REAL-WORLD EXAMPLES for every major concept
+3. Add ANALOGIES that relate technical concepts to everyday life
+4. Explain EVERY technical term in simple language (in parentheses after first use)
+5. Add step-by-step breakdowns for complex processes
+6. Use simple, conversational language like explaining to a friend
 
-2. If user is INTERMEDIATE:
-   - Keep standard explanations
-   - Include moderate examples
-   - Balance basics and advanced concepts
-
-3. If user is ADVANCED:
-   - Skip basic explanations
-   - Focus on advanced concepts and edge cases
-   - Assume prior knowledge
-   - Add advanced examples and optimizations
-
-4. Consider programming languages:
-   - If user knows Python: Emphasize Python examples
-   - If user knows C++: Can mention C++ alternatives
-   - Adjust code examples to their known languages
-
-5. Consider hardware experience:
-   - If no hardware experience: Add more hardware basics
-   - If advanced: Skip hardware basics, focus on advanced topics
+EXAMPLE OF GOOD PERSONALIZATION:
+Original: "ROS2 uses a publish-subscribe architecture."
+Personalized: "ROS2 uses a publish-subscribe architecture (think of it like YouTube - some people create videos and 'publish' them, while others 'subscribe' to watch them). In robotics, this means one part of your robot can send out information (like sensor data), and other parts that need that information can subscribe to receive it automatically. For example, your robot's camera might publish images, and the navigation system subscribes to those images to know where to go."
 
 ORIGINAL CONTENT:
 {content}
 
-Return ONLY the personalized content. Do not include explanations or meta-commentary. Maintain the same markdown structure and formatting. Keep all code examples, diagrams, and technical details, but adjust explanations to match the user's level."""
+REWRITTEN CONTENT (make it OBVIOUSLY different, much more detailed, with examples and analogies):"""
     
     return prompt
 
 
-def personalize_content(content: str, user: dict) -> str:
+async def personalize_content(content: str, user: dict) -> str:
     """
     Personalize content using OpenAI based on user profile.
     
@@ -202,23 +179,74 @@ def personalize_content(content: str, user: dict) -> str:
         user_context = get_user_profile_context(user)
         prompt = generate_personalization_prompt(content, user_context)
         
-        response = openai.chat.completions.create(
-            model=settings.openai_model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are an expert educational content personalizer. Adjust technical content to match user's experience level while maintaining accuracy and completeness."
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            temperature=0.7,
-            max_tokens=4000,
-        )
-        
-        personalized = response.choices[0].message.content.strip()
+        # Check for Gemini first (User requested free tier)
+        if settings.gemini_api_key:
+            import asyncio
+            import google.generativeai as genai
+            
+            genai.configure(api_key=settings.gemini_api_key)
+            model = genai.GenerativeModel(settings.gemini_model)
+            
+            logger.info(f"Sending request to Gemini ({settings.gemini_model})... (Prompt length: {len(prompt)} chars)")
+            
+            # Configure safety settings for educational content
+            safety_settings = {
+                'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE',
+                'HARM_CATEGORY_HATE_SPEECH': 'BLOCK_NONE',
+                'HARM_CATEGORY_SEXUALLY_EXPLICIT': 'BLOCK_NONE',
+                'HARM_CATEGORY_DANGEROUS_CONTENT': 'BLOCK_NONE',
+            }
+            
+            # Run the blocking Gemini call in a thread pool to avoid blocking the event loop
+            def _generate_sync():
+                return model.generate_content(
+                    prompt,
+                    generation_config=genai.types.GenerationConfig(
+                        temperature=0.7,
+                        max_output_tokens=2048,
+                    ),
+                    safety_settings=safety_settings
+                )
+            
+            try:
+                response = await asyncio.to_thread(_generate_sync)
+                logger.info("Gemini response received successfully.")
+                
+                # Check if response was blocked
+                if not response.text:
+                    logger.warning(f"Gemini blocked response. Finish reason: {response.candidates[0].finish_reason if response.candidates else 'unknown'}")
+                    # Return original content if blocked
+                    return content
+                    
+                personalized = response.text.strip()
+            except Exception as e:
+                logger.error(f"Gemini generation error: {e}")
+                # Return original content on error
+                return content
+            
+        elif settings.openai_api_key:
+            # Fallback to OpenAI if configured
+            response = openai.chat.completions.create(
+                model=settings.openai_model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are an expert educational content personalizer. Adjust technical content to match user's experience level while maintaining accuracy and completeness."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.7,
+                max_tokens=4000,
+            )
+            personalized = response.choices[0].message.content.strip()
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No AI service configured (Gemini or OpenAI missing)"
+            )
         
         # Remove markdown code blocks if present
         if personalized.startswith("```"):
@@ -303,24 +331,25 @@ async def personalize_content_endpoint(
         
         # Generate personalized content
         logger.info(f"Personalizing content for chapter {chapter_id}, user {user_id}")
-        personalized_content = personalize_content(request.content, full_user)
+        personalized_content = await personalize_content(request.content, full_user)
         
         # Calculate content hash
         content_hash = get_content_hash(request.content)
         
-        # Save to database
+        # Save to database (serialize metadata to JSON)
+        import json
         await save_personalization(
             user_id=user_id,
             chapter_id=chapter_id,
             content=personalized_content,
             content_type="personalized",
             chapter_path=request.chapter_path,
-            metadata={
+            metadata=json.dumps({
                 "content_hash": content_hash,
                 "original_length": len(request.content),
                 "personalized_length": len(personalized_content),
                 "personalized_at": datetime.utcnow().isoformat(),
-            }
+            })
         )
         
         logger.info(f"Personalized content saved for chapter {chapter_id}")
