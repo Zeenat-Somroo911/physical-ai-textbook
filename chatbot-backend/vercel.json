@@ -7,7 +7,7 @@
     }
   ],
   "env": {
-    "GEMINI_API_KEY": "@gemini_api_key",
-    "CORS_ORIGINS": "@cors_origins"
+    "GEMINI_API_KEY": "AIzaSyBBD_nH50abTs-hkI_-f_QJpyZqjKuJXPE",
+    "CORS_ORIGINS": "https://Zeenat-Somroo911.github.io"
   }
 }
