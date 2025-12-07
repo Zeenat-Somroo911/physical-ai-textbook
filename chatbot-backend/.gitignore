@@ -36,9 +36,6 @@ venv.bak/
 .env.*.local
 *.env
 
-*generated-content/
-.generated-content/
-
 # IDE
 .vscode/
 .idea/

@@ -35,6 +35,7 @@ from db import init_db_pool, close_db_pool
 from auth import router as auth_router
 from personalize import router as personalize_router
 from translate import router as translate_router
+from content import router as content_router
 
 # Configure logging
 logging.basicConfig(
@@ -162,6 +163,7 @@ app = FastAPI(
 app.include_router(auth_router)
 app.include_router(personalize_router)
 app.include_router(translate_router)
+app.include_router(content_router)
 
 # Configure CORS
 app.add_middleware(

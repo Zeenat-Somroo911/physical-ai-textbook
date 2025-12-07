@@ -5,15 +5,10 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
-import AuthModal from '../components/AuthModal';
-import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-
 import styles from './index.module.css';
 
-function HeroSection({ onOpenAuth }) {
+function HeroSection() {
   const { siteConfig } = useDocusaurusContext();
-  const { user, logout } = useAuth();
   const logoUrl = useBaseUrl('img/logo.png');
   return (
     <section className={styles.hero}>
@@ -49,21 +44,19 @@ function HeroSection({ onOpenAuth }) {
               to="/docs/intro">
               Start Learning →
             </Link>
-            {user ? (
-              <button
-                className={clsx('button button--outline button--lg', styles.ctaButtonSecondary)}
-                onClick={logout}
-              >
-                Logout
-              </button>
-            ) : (
-              <button
-                className={clsx('button button--outline button--lg', styles.ctaButtonSecondary)}
-                onClick={onOpenAuth}
-              >
-                Sign Up / Log In
-              </button>
-            )}
+            <button
+              className={clsx('button button--outline button--lg', styles.ctaButtonSecondary)}
+              onClick={() => {
+                const modulesSection = document.querySelector('.' + styles.modules);
+                if (modulesSection) {
+                  const yOffset = -80;
+                  const y = modulesSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                  window.scrollTo({ top: y, behavior: 'smooth' });
+                }
+              }}
+            >
+              View Content
+            </button>
           </div>
           <div className={styles.heroStats}>
             <div className={styles.statItem}>
@@ -252,8 +245,7 @@ function StatsSection() {
   );
 }
 
-function CTASection({ onOpenAuth }) {
-  const { user, logout } = useAuth();
+function CTASection() {
   return (
     <section className={styles.cta}>
       <div className={styles.ctaBackground}>
@@ -271,21 +263,19 @@ function CTASection({ onOpenAuth }) {
               to="/docs/intro">
               Start Learning Now →
             </Link>
-            {user ? (
-              <button
-                className={clsx('button button--outline button--lg', styles.ctaButtonOutline)}
-                onClick={logout}
-              >
-                Logout
-              </button>
-            ) : (
-              <button
-                className={clsx('button button--outline button--lg', styles.ctaButtonOutline)}
-                onClick={onOpenAuth}
-              >
-                Create Account
-              </button>
-            )}
+            <button
+              className={clsx('button button--outline button--lg', styles.ctaButtonOutline)}
+              onClick={() => {
+                const modulesSection = document.querySelector('.' + styles.modules);
+                if (modulesSection) {
+                  const yOffset = -80;
+                  const y = modulesSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                  window.scrollTo({ top: y, behavior: 'smooth' });
+                }
+              }}
+            >
+              View Content
+            </button>
           </div>
           <div className={styles.ctaFeatures}>
             <div className={styles.ctaFeature}>
@@ -309,37 +299,18 @@ function CTASection({ onOpenAuth }) {
 
 export default function Home() {
   const { siteConfig } = useDocusaurusContext();
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-
-  useEffect(() => {
-    const handleHashChange = () => {
-      if (window.location.hash === '#signup') {
-        setIsAuthOpen(true);
-        // Clear hash to allow future re-triggering? Optional, better to keep state clean.
-        // window.history.replaceState(null, '', ' '); 
-      }
-    };
-
-    // Check on mount
-    handleHashChange();
-
-    // Check on hash change event
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
 
   return (
     <Layout
       title={`${siteConfig.title}`}
       description="Master Embodied Intelligence - A comprehensive textbook on Physical AI and Humanoid Robotics. Learn ROS 2, simulation, perception, and VLA systems for free.">
       <main className={styles.homepage}>
-        <HeroSection onOpenAuth={() => setIsAuthOpen(true)} />
+        <HeroSection />
         <FeaturesSection />
         <ModulesSection />
         <StatsSection />
-        <CTASection onOpenAuth={() => setIsAuthOpen(true)} />
+        <CTASection />
       </main>
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
     </Layout>
   );
 }

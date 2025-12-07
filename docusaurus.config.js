@@ -75,48 +75,6 @@ const config = {
         },
         items: [
           {
-            type: 'docSidebar',
-            sidebarId: 'tutorialSidebar',
-            position: 'left',
-            label: 'Textbook',
-          },
-          {
-            label: 'Module 1: ROS2',
-            to: '/docs/module-01-ros2/intro',
-            position: 'left',
-          },
-          {
-            label: 'Module 2: Simulation',
-            to: '/docs/module-02-simulation/intro',
-            position: 'left',
-          },
-          {
-            label: 'Module 3: Isaac',
-            to: '/docs/module-03-isaac/intro',
-            position: 'left',
-          },
-          {
-            label: 'Module 4: VLA',
-            to: '/docs/module-04-vla/intro',
-            position: 'left',
-          },
-          {
-            label: 'Projects',
-            to: '/docs/projects/overview',
-            position: 'left',
-          },
-          {
-            href: 'https://github.com/Zeenat-Somroo911/physical-ai-textbook',
-            label: 'GitHub',
-            position: 'right',
-            className: 'navbar-github-link',
-          },
-
-          {
-            type: 'custom-urdu-button',
-            position: 'right',
-          },
-          {
             type: 'custom-auth-button',
             position: 'right',
           },

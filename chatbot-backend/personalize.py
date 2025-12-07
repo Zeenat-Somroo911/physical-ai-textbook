@@ -1,5 +1,3 @@
-
-
 import logging
 from typing import Optional
 from datetime import datetime
@@ -27,15 +25,13 @@ router = APIRouter(prefix="/personalize", tags=["personalization"])
 openai.api_key = settings.openai_api_key
 
 
-# ============================================================================
-# Pydantic Models
-# ============================================================================
-
 class PersonalizeRequest(BaseModel):
     """Personalization request model."""
     chapter_id: str = Field(..., description="Chapter identifier")
     chapter_path: Optional[str] = Field(None, description="Full path to chapter")
-    content: str = Field(..., description="Original chapter content", min_length=1)
+    content: Optional[str] = Field(None, description="Original chapter content (not used for pre-generated)")
+    language: str = Field("english", description="Language: english, urdu, roman_urdu")
+    difficulty: str = Field("medium", description="Difficulty: easy, medium, hard")
 
 
 class PersonalizeResponse(BaseModel):
@@ -43,6 +39,9 @@ class PersonalizeResponse(BaseModel):
     personalized_content: str = Field(..., description="Personalized content")
     chapter_id: str = Field(..., description="Chapter identifier")
     cached: bool = Field(False, description="Whether content was from cache")
+    source: str = Field("pre-generated", description="Content source: pre-generated or original-docs")
+    language: Optional[str] = Field(None, description="Language used")
+    difficulty: Optional[str] = Field(None, description="Difficulty used")
 
 
 class CheckPersonalizedRequest(BaseModel):
@@ -61,20 +60,7 @@ class ResetPersonalizeRequest(BaseModel):
     chapter_id: str
 
 
-# ============================================================================
-# Helper Functions
-# ============================================================================
-
 def get_user_profile_context(user: dict) -> str:
-    """
-    Build context string from user profile for personalization.
-    
-    Args:
-        user: User data dictionary
-        
-    Returns:
-        Context string for OpenAI prompt
-    """
     preferences = user.get("preferences", {})
     
     # Check for direct background field (from new AuthModal)
@@ -136,9 +122,7 @@ def get_user_profile_context(user: dict) -> str:
 
 
 def generate_personalization_prompt(content: str, user_context: str) -> str:
-    """
-    Generate prompt for Gemini to personalize content with VISIBLE changes.
-    """
+
     prompt = f"""You are an expert educational content personalizer. Your task is to COMPLETELY REWRITE this robotics textbook content to make it much more beginner-friendly and detailed.
 
 USER PROFILE:
@@ -165,16 +149,6 @@ REWRITTEN CONTENT (make it OBVIOUSLY different, much more detailed, with example
 
 
 async def personalize_content(content: str, user: dict) -> str:
-    """
-    Personalize content using OpenAI based on user profile.
-    
-    Args:
-        content: Original content
-        user: User data dictionary
-        
-    Returns:
-        Personalized content
-    """
     try:
         user_context = get_user_profile_context(user)
         prompt = generate_personalization_prompt(content, user_context)
@@ -287,56 +261,70 @@ async def personalize_content_endpoint(
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Personalize chapter content based on user profile.
+    Serve pre-generated personalized content based on language and difficulty.
     
     Args:
-        request: Personalization request with chapter content
+        request: Personalization request with chapter_id, language, difficulty
         current_user: Current authenticated user
         
     Returns:
-        Personalized content
+        Personalized content from generated-content folder
     """
     try:
         user_id = str(current_user["id"])
         chapter_id = request.chapter_id
+        language = request.language
+        difficulty = request.difficulty
         
-        # Check if personalized content already exists
-        existing = await get_personalizations(
-            user_id=user_id,
-            chapter_id=chapter_id,
-            content_type="personalized"
-        )
+        # Map language to file naming convention
+        language_map = {
+            "english": "english",
+            "urdu": "urdu",
+            "roman_urdu": "roman"
+        }
         
-        if existing:
-            # Check if content hash matches (content hasn't changed)
-            content_hash = get_content_hash(request.content)
-            existing_hash = existing[0].get("metadata", {}).get("content_hash")
+        lang_code = language_map.get(language, "english")
+
+        from pathlib import Path
+        import os
+        
+        # Get the project root (where chatbot-backend folder is)
+        backend_dir = Path(__file__).parent
+        project_root = backend_dir.parent
+        generated_content_dir = project_root / "generated-content"
+        
+        # Build path to the specific version
+        content_file = generated_content_dir / chapter_id / f"{difficulty}_{lang_code}.md"
+        
+        logger.info(f"Looking for pre-generated content at: {content_file}")
+        
+        # Track which source we're using
+        content_source = "pre-generated"
+        
+        # Check if file exists
+        if not content_file.exists():
+            logger.warning(f"Pre-generated content not found: {content_file}")
+            content_source = "original-docs"
             
-            if existing_hash == content_hash:
-                # Return cached content
-                logger.info(f"Returning cached personalized content for chapter {chapter_id}")
-                return PersonalizeResponse(
-                    personalized_content=existing[0]["content"],
-                    chapter_id=chapter_id,
-                    cached=True
+            # If not found, try to read original docs file as fallback
+            docs_file = project_root / "docs" / f"{chapter_id}.md"
+            if docs_file.exists():
+                logger.info(f"Falling back to original docs: {docs_file}")
+                with open(docs_file, 'r', encoding='utf-8') as f:
+                    personalized_content = f.read()
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Content not found for {chapter_id} with {language}/{difficulty}"
                 )
+        else:
+            # Read pre-generated content
+            with open(content_file, 'r', encoding='utf-8') as f:
+                personalized_content = f.read()
         
-        # Get full user data (including preferences)
-        full_user = await get_user_by_id(user_id)
-        if not full_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
+        logger.info(f"Loaded content ({len(personalized_content)} chars) for {chapter_id}")
         
-        # Generate personalized content
-        logger.info(f"Personalizing content for chapter {chapter_id}, user {user_id}")
-        personalized_content = await personalize_content(request.content, full_user)
-        
-        # Calculate content hash
-        content_hash = get_content_hash(request.content)
-        
-        # Save to database (serialize metadata to JSON)
+        # Save to database for caching (optional, for tracking)
         import json
         await save_personalization(
             user_id=user_id,
@@ -345,19 +333,23 @@ async def personalize_content_endpoint(
             content_type="personalized",
             chapter_path=request.chapter_path,
             metadata=json.dumps({
-                "content_hash": content_hash,
-                "original_length": len(request.content),
-                "personalized_length": len(personalized_content),
+                "language": language,
+                "difficulty": difficulty,
+                "source": content_source,
+                "file_path": str(content_file if content_source == "pre-generated" else docs_file),
                 "personalized_at": datetime.utcnow().isoformat(),
             })
         )
         
-        logger.info(f"Personalized content saved for chapter {chapter_id}")
+        logger.info(f"Served {content_source} content for chapter {chapter_id}")
         
         return PersonalizeResponse(
             personalized_content=personalized_content,
             chapter_id=chapter_id,
-            cached=False
+            cached=False,
+            source=content_source,
+            language=language,
+            difficulty=difficulty
         )
     
     except HTTPException:
@@ -366,7 +358,7 @@ async def personalize_content_endpoint(
         logger.error(f"Personalization error: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to personalize content: {str(e)}"
+            detail=f"Failed to load personalized content: {str(e)}"
         )
 
 

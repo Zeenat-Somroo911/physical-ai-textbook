@@ -17,10 +17,18 @@ const ChatBot = () => {
   const [selectedText, setSelectedText] = useState('');
   const [conversationId, setConversationId] = useState(null);
   const [sources, setSources] = useState([]);
+  const [showWelcome, setShowWelcome] = useState(true);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const chatWindowRef = useRef(null);
+
+  // Hide welcome message after first interaction
+  useEffect(() => {
+    if (messages.length > 0) {
+      setShowWelcome(false);
+    }
+  }, [messages]);
 
   // Scroll to bottom when messages change
   const scrollToBottom = useCallback(() => {
@@ -193,20 +201,22 @@ const ChatBot = () => {
 
   return (
     <>
-      {/* Floating Chat Button */}
-      <button
-        className={clsx(styles.chatButton, isOpen && styles.chatButtonOpen)}
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label={isOpen ? "Chatbot is open" : "Open chatbot"}
-      >
-        {/* Always show chat icon - close button is in header */}
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-        </svg>
-        {!isOpen && messages.length > 0 && (
-          <span className={styles.notificationBadge}>{messages.length}</span>
-        )}
-      </button>
+      {/* Floating Chat Button - Hidden when chat is open */}
+      {!isOpen && (
+        <button
+          className={styles.chatButton}
+          onClick={() => setIsOpen(true)}
+          aria-label="Open chatbot"
+        >
+          {/* Always show chat icon - close button is in header */}
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          {messages.length > 0 && (
+            <span className={styles.notificationBadge}>{messages.length}</span>
+          )}
+        </button>
+      )}
 
       {/* Chat Window */}
       {isOpen && (
@@ -269,7 +279,14 @@ const ChatBot = () => {
 
           {/* Messages */}
           <div className={styles.messagesContainer}>
-            {messages.length === 0 ? (
+            {showWelcome && messages.length === 0 && (
+              <div className={styles.welcomeMessage}>
+                <div className={styles.welcomeIcon}>👋</div>
+                <h3>Welcome! I am your reading assistant</h3>
+                <p>I can help you understand Physical AI & Humanoid Robotics concepts. Ask me anything!</p>
+              </div>
+            )}
+            {messages.length === 0 && !showWelcome ? (
               <div className={styles.emptyState}>
                 <div className={styles.emptyStateIcon}>💬</div>
                 <h4 className={styles.emptyStateTitle}>Start a conversation</h4>

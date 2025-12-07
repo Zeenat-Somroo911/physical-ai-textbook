@@ -1,0 +1,9 @@
+{
+    "buildCommand": "npm run build",
+    "outputDirectory": "build",
+    "framework": "docusaurus",
+    "installCommand": "npm install",
+    "env": {
+        "CHATBOT_URL": "@chatbot_url"
+    }
+}

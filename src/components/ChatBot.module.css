@@ -118,7 +118,7 @@
 
 /* ===== Chat Header ===== */
 .chatHeader {
-  padding: 1.5rem;
+  padding: 1rem 1.5rem;
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
   border-bottom: 1px solid var(--ifm-color-emphasis-200);
   display: flex;
@@ -562,6 +562,60 @@
   color: var(--ifm-color-content-secondary);
   max-width: 300px;
 }
+
+/* ===== Welcome Message ===== */
+.welcomeMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  height: 100%;
+  gap: 0.75rem;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.welcomeIcon {
+  font-size: 3.5rem;
+  animation: wave 1s ease-in-out infinite;
+}
+
+@keyframes wave {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(20deg);
+  }
+
+  75% {
+    transform: rotate(-20deg);
+  }
+}
+
+.welcomeMessage h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--ifm-heading-color);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.welcomeMessage p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--ifm-color-content-secondary);
+  max-width: 280px;
+  line-height: 1.5;
+}
+
 
 .suggestions {
   display: flex;

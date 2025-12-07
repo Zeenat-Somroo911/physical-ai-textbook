@@ -43,9 +43,6 @@ wheels/
 *.egg
 MANIFEST
 
-*generated-content/
-.generated-content/
-
 # Virtual environments
 venv/
 env/
@@ -83,3 +80,10 @@ htmlcov/
 Thumbs.db
 .DS_Store
 
+# Generated documentation content (don't push to GitHub)
+# Note: If docs/ contains source content, remove this line
+docs/
+generated-content/
+
+# Vercel
+.vercel

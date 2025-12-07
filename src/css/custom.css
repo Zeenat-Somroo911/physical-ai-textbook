@@ -199,3 +199,22 @@
   background-color: var(--ifm-color-primary-dark);
   border-color: var(--ifm-color-primary-dark);
 }
+
+/* Outline button styling - use blue/cyan theme */
+.button--outline {
+  border-color: var(--ifm-color-primary);
+  color: var(--ifm-color-primary);
+  background: transparent;
+}
+
+.button--outline:hover {
+  background-color: var(--ifm-color-primary);
+  color: #000;
+  border-color: var(--ifm-color-primary);
+}
+
+.button--outline:active,
+.button--outline:focus {
+  border-color: var(--ifm-color-primary);
+  color: var(--ifm-color-primary);
+}

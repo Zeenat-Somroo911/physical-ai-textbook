@@ -32,9 +32,9 @@ export default function AuthButton() {
                     className="navbar-signup-opts"
                     style={{
                         background: 'transparent !important',
-                        border: '1px solid var(--ifm-color-danger) !important',
+                        border: '2px solid #00d4ff !important',
                         backgroundImage: 'none !important',
-                        color: 'var(--ifm-color-danger) !important'
+                        color: '#00d4ff !important'
                     }}
                 >
                     Logout

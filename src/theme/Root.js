@@ -8,7 +8,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from '@docusaurus/router';
 import ChatBot from '../components/ChatBot';
+import PersonalizeButton from '../components/PersonalizeButton';
 import { AuthProvider } from '../context/AuthContext';
+import { ContentPreferenceProvider } from '../context/ContentPreferenceContext';
 import AuthModal from '../components/AuthModal';
 import { Toaster } from 'react-hot-toast';
 
@@ -34,14 +36,17 @@ export default function Root({ children }) {
 
   return (
     <AuthProvider>
-      {children}
-      <ChatBot />
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        initialMode={authMode}
-      />
-      <Toaster position="top-right" />
+      <ContentPreferenceProvider>
+        {children}
+        <ChatBot />
+        <PersonalizeButton />
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          initialMode={authMode}
+        />
+        <Toaster position="top-right" />
+      </ContentPreferenceProvider>
     </AuthProvider>
   );
 }
