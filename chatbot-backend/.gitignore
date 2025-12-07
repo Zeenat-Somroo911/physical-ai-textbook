@@ -77,3 +77,4 @@ qdrant_storage/
 *.tmp
 *.bak
 *.cache
+.vercel

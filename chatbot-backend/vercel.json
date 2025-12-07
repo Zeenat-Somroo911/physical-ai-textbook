@@ -1,11 +1,5 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "main.py",
-      "use": "@vercel/python"
-    }
-  ],
   "routes": [
     {
       "src": "/(.*)",
@@ -13,16 +7,7 @@
     }
   ],
   "env": {
-    "OPENAI_API_KEY": "@openai_api_key",
     "GEMINI_API_KEY": "@gemini_api_key",
-    "QDRANT_URL": "@qdrant_url",
-    "DATABASE_URL": "@database_url",
-    "JWT_SECRET": "@jwt_secret",
     "CORS_ORIGINS": "@cors_origins"
-  },
-  "functions": {
-    "main.py": {
-      "maxDuration": 30
-    }
   }
 }
