@@ -18,7 +18,7 @@ Build a complete Voice-Language-Action (VLA) system that enables a robot to unde
 
 ### Prerequisites
 
-- Completed [Module 4: Vision-Language-Action](../module-04-vla/vla-introduction)
+- Completed [Module 4: Vision-Language-Action](../module-04-vla/01-vla-introduction.md)
 - OpenAI API key ($5 credit)
 - Understanding of multimodal systems
 - Basic knowledge of action planning
@@ -703,7 +703,7 @@ ros2 launch robot_butler butler.launch.py
 ## Next Steps
 
 - [Final Project: Capstone Guidelines](final-project.md) - Complete capstone
-- [Module 4: Capstone Project](../module-04-vla/capstone-project) - Detailed capstone guide
+- [Module 4: Capstone Project](../module-04-vla/06-capstone-project.md) - Detailed capstone guide
 
 ---
 

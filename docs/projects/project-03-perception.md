@@ -18,7 +18,7 @@ Build a complete autonomous navigation system that combines object detection, SL
 
 ### Prerequisites
 
-- Completed [Module 3: AI-Powered Perception](../module-03-isaac/free-alternatives)
+- Completed [Module 3: AI-Powered Perception](../module-03-isaac/01-free-alternatives.md)
 - Understanding of OpenCV
 - Basic knowledge of SLAM
 - Nav2 installed
@@ -608,7 +608,7 @@ ros2 launch autonomous_nav autonomous_nav.launch.py
 ## Next Steps
 
 - [Project 4: Voice-Controlled Robot Butler](project-04-vla.md) - VLA project
-- [Module 4: Vision-Language-Action](../module-04-vla/vla-introduction) - Learn VLA
+- [Module 4: Vision-Language-Action](../module-04-vla/01-vla-introduction.md) - Learn VLA
 
 ---
 

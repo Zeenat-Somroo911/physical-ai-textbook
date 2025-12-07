@@ -18,7 +18,7 @@ Design and build a complete humanoid robot in Gazebo simulation. This project co
 
 ### Prerequisites
 
-- Completed [Module 2: Simulation & Gazebo](../module-02-simulation/gazebo-intro)
+- Completed [Module 2: Simulation & Gazebo](../module-02-simulation/01-gazebo-intro.md)
 - Understanding of URDF format
 - Basic knowledge of robot kinematics
 - Gazebo installed
@@ -727,7 +727,7 @@ ros2 topic echo /humanoid/imu
 ## Next Steps
 
 - [Project 3: Autonomous Navigation System](project-03-perception.md) - Perception project
-- [Module 3: AI-Powered Perception](../module-03-isaac/free-alternatives) - Learn perception
+- [Module 3: AI-Powered Perception](../module-03-isaac/01-free-alternatives.md) - Learn perception
 
 ---
 

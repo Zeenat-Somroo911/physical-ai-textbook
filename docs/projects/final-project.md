@@ -336,7 +336,7 @@ final_project/
 
 - [ROS 2 Examples](https://github.com/ros2/examples)
 - [Nav2 Examples](https://github.com/ros-planning/navigation2)
-- [Course Projects](../projects/overview)
+- [Course Projects](../projects/overview.md)
 
 ## Timeline
 

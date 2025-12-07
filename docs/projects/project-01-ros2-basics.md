@@ -18,7 +18,7 @@ Build a multi-robot communication system where multiple robots can coordinate an
 
 ### Prerequisites
 
-- Completed [Module 1: ROS 2 Fundamentals](../module-01-ros2/introduction)
+- Completed [Module 1: ROS 2 Fundamentals](../module-01-ros2/01-introduction.md)
 - Basic Python programming
 - ROS 2 Humble installed
 - Understanding of topics and services
@@ -629,7 +629,7 @@ ros2 launch multi_robot_system multi_robot.launch.py
 ## Next Steps
 
 - [Project 2: Build Your Own Humanoid](project-02-simulation.md) - Simulation project
-- [Module 2: Simulation & Gazebo](../module-02-simulation/gazebo-intro) - Learn more about simulation
+- [Module 2: Simulation & Gazebo](../module-02-simulation/01-gazebo-intro.md) - Learn more about simulation
 
 ---
 
