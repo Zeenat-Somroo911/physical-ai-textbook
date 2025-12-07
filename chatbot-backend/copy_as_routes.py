@@ -60,11 +60,19 @@ def copy_as_routes():
             # Read source file
             content = version_file.read_text(encoding='utf-8')
             
-            # Add frontmatter to hide from sidebar
-            if not content.startswith('---'):
-                content = f"""---
-sidebar_class_name: hidden
-displayed_sidebar: null
+            # Extract original frontmatter if exists
+            original_frontmatter = {}
+            if content.startswith('---'):
+                end_idx = content.find('---', 3)
+                if end_idx != -1:
+                    # Remove original frontmatter temporarily
+                    content = content[end_idx + 3:].lstrip()
+            
+            # Add proper frontmatter for Docusaurus docs with sidebar
+            content = f"""---
+sidebar_position: 999
+displayed_sidebar: tutorialSidebar
+hide_title: false
 pagination_prev: null
 pagination_next: null
 ---
