@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import clsx from 'clsx';
 import styles from './ChatBot.module.css';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const ChatBot = () => {
   const { siteConfig } = useDocusaurusContext();
@@ -195,18 +197,12 @@ const ChatBot = () => {
       <button
         className={clsx(styles.chatButton, isOpen && styles.chatButtonOpen)}
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Open chatbot"
+        aria-label={isOpen ? "Chatbot is open" : "Open chatbot"}
       >
-        {isOpen ? (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        ) : (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
-        )}
+        {/* Always show chat icon - close button is in header */}
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
         {!isOpen && messages.length > 0 && (
           <span className={styles.notificationBadge}>{messages.length}</span>
         )}
@@ -316,7 +312,32 @@ const ChatBot = () => {
                       {message.role === 'user' ? '👤' : '🤖'}
                     </div>
                     <div className={styles.messageContent}>
-                      <div className={styles.messageText}>{message.content}</div>
+                      <div className={styles.messageText}>
+                        {message.role === 'assistant' ? (
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              // Custom components to ensure proper styling
+                              h1: ({ node, ...props }) => <h1 className={styles.markdownH1} {...props} />,
+                              h2: ({ node, ...props }) => <h2 className={styles.markdownH2} {...props} />,
+                              h3: ({ node, ...props }) => <h3 className={styles.markdownH3} {...props} />,
+                              p: ({ node, ...props }) => <p className={styles.markdownP} {...props} />,
+                              ul: ({ node, ...props }) => <ul className={styles.markdownUl} {...props} />,
+                              ol: ({ node, ...props }) => <ol className={styles.markdownOl} {...props} />,
+                              li: ({ node, ...props }) => <li className={styles.markdownLi} {...props} />,
+                              strong: ({ node, ...props }) => <strong className={styles.markdownStrong} {...props} />,
+                              code: ({ node, inline, ...props }) =>
+                                inline ?
+                                  <code className={styles.markdownInlineCode} {...props} /> :
+                                  <code className={styles.markdownCode} {...props} />,
+                            }}
+                          >
+                            {message.content}
+                          </ReactMarkdown>
+                        ) : (
+                          message.content
+                        )}
+                      </div>
                       {message.sources && message.sources.length > 0 && (
                         <div className={styles.messageSources}>
                           <span className={styles.sourcesLabel}>Sources:</span>

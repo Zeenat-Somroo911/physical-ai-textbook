@@ -16,6 +16,11 @@ import openai
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
 import asyncpg
+from dotenv import load_dotenv
+import os
+
+# Load environment variables FIRST
+load_dotenv(override=True)
 
 from config import settings
 from models import (
@@ -38,54 +43,90 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Initialize OpenAI
-openai.api_key = settings.openai_api_key
+import requests
+import time
+from huggingface_hub import InferenceClient
+
+# Initialize AI Clients
+if settings.openai_api_key:
+    openai.api_key = settings.openai_api_key
+
+# Import Gemini unconditionally to avoid issues
+import google.generativeai as genai
+
+# Configure Gemini using direct env loading (like generate_all_versions.py)
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+    logger.info(f"Gemini API configured at module level with model: {settings.gemini_model}")
 
 # Global clients (initialized in lifespan)
-qdrant_client: Optional[QdrantClient] = None
+qdrant_client: Optional[QdrantClient] = None # Qdrant Client
+hf_client: Optional[InferenceClient] = None # HF Client (Inference API)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
-    global qdrant_client
+    global qdrant_client, hf_client
     
     # Startup
     logger.info("Starting up application...")
     
+    # 1. Log Configuration Status
+    logger.info(f"Qdrant URL: {settings.qdrant_url}")
+    logger.info(f"Qdrant Key: {'***' if settings.qdrant_api_key else 'MISSING'}")
+    logger.info(f"Gemini Key: {'***' if settings.gemini_api_key else 'MISSING'}")
+    logger.info(f"HF Token: {'***' if settings.hf_token else 'MISSING'}")
+
     try:
-        # Initialize Qdrant client
+        # 2. Initialize HF Client
+        if not settings.hf_token:
+            logger.warning("HF_TOKEN is missing. Embeddings will fail.")
+        else:
+            hf_client = InferenceClient(token=settings.hf_token, timeout=30.0)
+            logger.info("HF Inference Client initialized")
+        
+        # 3. Initialize Qdrant client
+        # We DO NOT fallback to None silently anymore.
         if settings.mock_mode:
             logger.warning("Running in MOCK MODE - Qdrant disabled")
             qdrant_client = None
         else:
+            if settings.qdrant_api_key:
+                qdrant_client = QdrantClient(
+                    url=settings.qdrant_url,
+                    api_key=settings.qdrant_api_key
+                )
+            else:
+                qdrant_client = QdrantClient(url=settings.qdrant_url)
+            
+            # Connection Test
             try:
-                if settings.qdrant_api_key:
-                    qdrant_client = QdrantClient(
-                        url=settings.qdrant_url,
-                        api_key=settings.qdrant_api_key
-                    )
-                else:
-                    qdrant_client = QdrantClient(url=settings.qdrant_url)
-                
-                # Ensure collection exists
-                try:
-                    qdrant_client.get_collection(settings.qdrant_collection_name)
-                    logger.info(f"Qdrant collection '{settings.qdrant_collection_name}' exists")
-                except Exception:
-                    # Create collection if it doesn't exist
-                    qdrant_client.create_collection(
-                        collection_name=settings.qdrant_collection_name,
-                        vectors_config=VectorParams(
-                            size=1536,  # OpenAI text-embedding-3-small dimension
-                            distance=Distance.COSINE
-                        )
-                    )
-                    logger.info(f"Created Qdrant collection '{settings.qdrant_collection_name}'")
+                collections = qdrant_client.get_collections()
+                logger.info(f"Connected to Qdrant successfully. Found {len(collections.collections)} collections.")
             except Exception as e:
-                logger.error(f"Failed to connect to Qdrant: {e}")
-                logger.warning("Disabling Qdrant functionality (Mock Mode)")
-                qdrant_client = None
+                logger.error(f"Failed Qdrant Connection Test: {e}")
+                raise e  # Propagate error to crash startup if DB is down (better than 500s later)
+
+            # Determine Vector Size
+            vector_size = 384 
+            logger.info(f"Using HuggingFace Embeddings ({vector_size} dimensions)")
+            
+            # Ensure proper collection exists
+            try:
+                qdrant_client.get_collection(settings.qdrant_collection_name)
+                logger.info(f"Qdrant collection '{settings.qdrant_collection_name}' exists")
+            except Exception:
+                # Only create if strictly needed (ingest usually does this)
+                logger.info(f"Collection '{settings.qdrant_collection_name}' not found during startup.")
+
+    except Exception as e:
+        logger.critical(f"Startup Failed: {e}", exc_info=True)
+        # We don't raise here to allow app to start for Health Checks, 
+        # but qdrant_client will be None, causing 500s on chat.
+        # Ideally, we should raise.
+
 
         
         # Initialize database pool using db.py
@@ -187,20 +228,33 @@ async def create_tables():
 
 def get_embedding(text: str) -> List[float]:
     """
-    Get embedding for text using OpenAI.
-    
-    Args:
-        text: Text to embed
-        
-    Returns:
-        List of floats representing the embedding
+    Get embedding for text using HuggingFace Inference Client.
     """
+    if hf_client is None:
+         raise ValueError("HF Client not initialized (HF_TOKEN missing).")
+
     try:
-        response = openai.embeddings.create(
-            model=settings.openai_embedding_model,
-            input=text
+        # Retry logic for API calls
+        for attempt in range(3):
+            try:
+                # feature_extraction returns ndarray
+                response = hf_client.feature_extraction(text, model=settings.hf_embedding_model)
+                if response is not None:
+                     return response.tolist()
+            except Exception as e:
+                # Check for loading error in string representation
+                if "loading" in str(e).lower():
+                    logger.info(f"Model loading... (Attempt {attempt+1})")
+                    time.sleep(5)
+                    continue
+                else:
+                    raise e
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate embedding (HF API Error)"
         )
-        return response.data[0].embedding
+
     except Exception as e:
         logger.error(f"Error getting embedding: {e}", exc_info=True)
         raise HTTPException(
@@ -209,28 +263,43 @@ def get_embedding(text: str) -> List[float]:
         )
 
 
-async def retrieve_relevant_context(query: str, top_k: int = None) -> List[dict]:
+async def retrieve_relevant_context(
+    query: str, 
+    top_k: int = None,
+    difficulty: str = None,
+    language: str = None
+) -> List[dict]:
     """
     Retrieve relevant context from vector database using RAG.
-    
-    Args:
-        query: User query
-        top_k: Number of results to retrieve
-        
-    Returns:
-        List of relevant documents with metadata
     """
     if top_k is None:
         top_k = settings.top_k_results
     
     try:
-        # Get query embedding
-        query_embedding = get_embedding(query)
+        from qdrant_client.models import Filter, FieldCondition, MatchValue
+        import asyncio
+        
+        # Get query embedding (Async call to sync function)
+        query_embedding = await asyncio.to_thread(get_embedding, query)
+        
+        # Build filters
+        must_filters = []
+        if difficulty:
+            must_filters.append(
+                FieldCondition(key="metadata.difficulty", match=MatchValue(value=difficulty))
+            )
+        if language:
+            must_filters.append(
+                FieldCondition(key="metadata.language", match=MatchValue(value=language))
+            )
+            
+        search_filter = Filter(must=must_filters) if must_filters else None
         
         # Search in Qdrant
         search_results = qdrant_client.search(
             collection_name=settings.qdrant_collection_name,
             query_vector=query_embedding,
+            query_filter=search_filter,
             limit=top_k
         )
         
@@ -243,7 +312,7 @@ async def retrieve_relevant_context(query: str, top_k: int = None) -> List[dict]
                 "score": result.score
             })
         
-        logger.info(f"Retrieved {len(contexts)} relevant contexts for query")
+        logger.info(f"Retrieved {len(contexts)} relevant contexts for query (Filters: diff={difficulty}, lang={language})")
         return contexts
     
     except Exception as e:
@@ -293,11 +362,6 @@ async def get_conversation_history(conversation_id: str, limit: int = 10) -> Lis
 async def save_message(conversation_id: str, role: str, content: str):
     """
     Save message to database.
-    
-    Args:
-        conversation_id: Conversation ID
-        role: Message role ('user' or 'assistant')
-        content: Message content
     """
     try:
         from db import get_db_connection
@@ -335,9 +399,6 @@ async def root():
 async def health_check():
     """
     Health check endpoint.
-    
-    Returns:
-        Health status of the application and services
     """
     services = {}
     
@@ -357,8 +418,13 @@ async def health_check():
     except Exception as e:
         services["database"] = f"unhealthy: {str(e)}"
     
-    # Check OpenAI (simple check)
-    services["openai"] = "configured" if settings.openai_api_key else "not configured"
+    # Check AI Service
+    if settings.gemini_api_key:
+        services["ai_model"] = "gemini (configured)"
+    elif settings.openai_api_key:
+        services["ai_model"] = "openai (configured)"
+    else:
+        services["ai_model"] = "not configured"
     
     overall_status = "healthy" if all(
         "healthy" in status or "configured" in status
@@ -376,12 +442,6 @@ async def health_check():
 async def chat(request: ChatRequest):
     """
     Chat endpoint with RAG support.
-    
-    Args:
-        request: Chat request with message and optional context
-        
-    Returns:
-        Chat response with assistant reply and sources
     """
     try:
         # Generate or use conversation ID
@@ -395,8 +455,12 @@ async def chat(request: ChatRequest):
         sources = []
         
         if request.use_rag:
-            # Retrieve relevant context
-            contexts = await retrieve_relevant_context(request.message)
+            # Retrieve relevant context with filters
+            contexts = await retrieve_relevant_context(
+                request.message, 
+                difficulty=request.difficulty,
+                language=request.language
+            )
             
             for ctx in contexts:
                 context_parts.append(ctx["content"])
@@ -407,50 +471,63 @@ async def chat(request: ChatRequest):
         if request.selected_text:
             context_parts.append(f"Selected text from page: {request.selected_text}")
         
-        # Build system prompt
-        system_prompt = """You are a helpful assistant for the Physical AI & Humanoid Robotics textbook.
-Answer questions based on the provided context from the textbook.
+        # Build prompt for Gemini
+        system_prompt = f"""You are a helpful assistant for the Physical AI & Humanoid Robotics textbook.
+The user prefers '{request.language}' language and '{request.difficulty}' difficulty level.
+Relevant context has been retrieved that matches these preferences.
+Answer questions using ONLY the provided context.
 If the context does not contain enough information, say so.
-Be concise, accurate, and helpful."""
-        
-        # Build messages for OpenAI
-        messages = [{"role": "system", "content": system_prompt}]
-        
-        # Add context if available
-        if context_parts:
-            context_text = "\n\n".join(context_parts)
-            messages.append({
-                "role": "system",
-                "content": f"Relevant context from textbook:\n\n{context_text}"
-            })
-        
-        # Add conversation history
-        for msg in history[-5:]:  # Last 5 messages for context
-            messages.append({
-                "role": msg["role"],
-                "content": msg["content"]
-            })
-        
-        # Add current user message
-        messages.append({"role": "user", "content": request.message})
+Be direct and helpful.
+
+CONTEXT:
+{' '.join(context_parts) if context_parts else 'No specific context provided.'}
+
+CHAT HISTORY:
+"""
+        # Add history to prompt string (Gemini API handles history differently, but this is simple context injection)
+        for msg in history[-5:]:
+            system_prompt += f"{msg['role'].upper()}: {msg['content']}\n"
+            
+        system_prompt += f"USER: {request.message}\nASSISTANT:"
         
         # Save user message
         await save_message(conversation_id, "user", request.message)
         
-        # Get response from OpenAI
+        # Get response from AI
+        assistant_response = ""
+        tokens_used = 0
+        
         try:
-            response = openai.chat.completions.create(
-                model=settings.openai_model,
-                messages=messages,
-                max_tokens=500,
-                temperature=0.7
-            )
-            
-            assistant_response = response.choices[0].message.content
-            tokens_used = response.usage.total_tokens if response.usage else None
-            
+            if GEMINI_API_KEY:
+                # Use Gemini - hardcode model like generate_all_versions.py
+                import asyncio
+                # Use exact model name from working script (NOT from env)
+                model_name = "models/gemini-flash-latest"
+                logger.info(f"Creating Gemini model with name: '{model_name}'")
+                model = genai.GenerativeModel(model_name)
+                response = await asyncio.to_thread(
+                    model.generate_content,
+                    system_prompt
+                )
+                assistant_response = response.text.strip()
+            elif settings.openai_api_key:
+                # Use OpenAI
+                messages = [{"role": "system", "content": system_prompt}]
+                messages.append({"role": "user", "content": request.message})
+                
+                response = openai.chat.completions.create(
+                    model=settings.openai_model,
+                    messages=messages,
+                    max_tokens=500,
+                    temperature=0.7
+                )
+                assistant_response = response.choices[0].message.content
+                tokens_used = response.usage.total_tokens if response.usage else 0
+            else:
+                 raise ValueError("No AI service configured")
+                 
         except Exception as e:
-            logger.error(f"OpenAI API error: {e}", exc_info=True)
+            logger.error(f"AI API error: {e}", exc_info=True)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to generate response: {str(e)}"

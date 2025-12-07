@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     # Gemini Configuration
     gemini_api_key: Optional[str] = Field(None, env="GEMINI_API_KEY", description="Google Gemini API key")
     gemini_model: str = Field(
-        default="gemini-2.0-flash-exp",
+        default="models/gemini-flash-latest",
         env="GEMINI_MODEL",
         description="Google Gemini model"
     )
@@ -55,6 +55,18 @@ class Settings(BaseSettings):
         default="models/embedding-001",
         env="GEMINI_EMBEDDING_MODEL",
         description="Google Gemini embedding model"
+    )
+
+    # HuggingFace Configuration (Inference API)
+    hf_embedding_model: str = Field(
+        default="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+        env="HF_EMBEDDING_MODEL",
+        description="HuggingFace sentence-transformer model ID"
+    )
+    hf_token: Optional[str] = Field(
+        None,
+        env="HF_TOKEN", 
+        description="HuggingFace Access Token for Inference API"
     )
     
     # Application Configuration

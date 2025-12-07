@@ -38,6 +38,14 @@ class ChatRequest(BaseModel):
         default=True,
         description="Whether to use RAG for enhanced responses"
     )
+    difficulty: Optional[str] = Field(
+        default="medium",
+        description="Content difficulty level (easy, medium, hard)"
+    )
+    language: Optional[str] = Field(
+        default="english",
+        description="Content language (english, urdu, roman)"
+    )
     
     class Config:
         """Pydantic configuration."""

@@ -57,18 +57,24 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
   }
+
   50% {
     box-shadow: 0 4px 30px rgba(102, 126, 234, 0.7);
   }
 }
 
 @keyframes bounce {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.2);
   }
@@ -77,12 +83,14 @@
 /* ===== Chat Window ===== */
 .chatWindow {
   position: fixed;
-  bottom: 100px;
+  bottom: 90px;
+  /* Lowered from 100px for better positioning */
   right: 2rem;
   width: 420px;
   max-width: calc(100vw - 4rem);
-  height: 600px;
-  max-height: calc(100vh - 120px);
+  height: 620px;
+  /* Increased from 600px for better content view */
+  max-height: calc(100vh - 110px);
   background: var(--ifm-background-color);
   border-radius: 20px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -101,6 +109,7 @@
     opacity: 0;
     transform: translateY(20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -155,9 +164,12 @@
 
 .clearButton,
 .closeButton {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 40px;
+  /* Increased from 36px */
+  height: 40px;
+  /* Increased from 36px */
+  border-radius: 10px;
+  /* Increased from 8px */
   border: none;
   background: transparent;
   color: var(--ifm-color-content-secondary);
@@ -168,10 +180,18 @@
   transition: all 0.2s ease;
 }
 
+.closeButton {
+  margin-left: 0.25rem;
+  /* Add spacing from clear button */
+}
+
 .clearButton:hover,
 .closeButton:hover {
-  background: var(--ifm-color-emphasis-200);
+  background: var(--ifm-color-emphasis-300);
+  /* Darker on hover */
   color: var(--ifm-color-content);
+  transform: scale(1.05);
+  /* Slight scale effect */
 }
 
 /* ===== Selected Text Banner ===== */
@@ -192,6 +212,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -286,6 +307,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -394,6 +416,84 @@
   padding: 0 0.5rem;
 }
 
+/* ===== Markdown Formatting in Messages ===== */
+.markdownH1,
+.markdownH2,
+.markdownH3 {
+  margin: 0.75rem 0 0.5rem 0;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.markdownH1 {
+  font-size: 1.3rem;
+  color: var(--ifm-heading-color);
+  border-bottom: 2px solid var(--ifm-color-emphasis-300);
+  padding-bottom: 0.3rem;
+}
+
+.markdownH2 {
+  font-size: 1.15rem;
+  color: var(--ifm-heading-color);
+}
+
+.markdownH3 {
+  font-size: 1rem;
+  color: var(--ifm-heading-color);
+}
+
+.markdownP {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.markdownUl,
+.markdownOl {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.markdownLi {
+  margin: 0.25rem 0;
+  line-height: 1.5;
+}
+
+.markdownStrong {
+  font-weight: 700;
+  color: var(--ifm-heading-color);
+}
+
+.markdownInlineCode {
+  background: var(--ifm-color-emphasis-200);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.85em;
+  color: var(--ifm-color-primary);
+}
+
+.markdownCode {
+  display: block;
+  background: var(--ifm-color-emphasis-100);
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.85em;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+  border-left: 3px solid var(--ifm-color-primary);
+}
+
+/* First paragraph in markdown shouldn't have top margin */
+.messageText .markdownP:first-child {
+  margin-top: 0;
+}
+
+/* Last element in markdown shouldn't have bottom margin */
+.messageText>*:last-child {
+  margin-bottom: 0;
+}
+
 /* ===== Typing Indicator ===== */
 .typingIndicator {
   display: flex;
@@ -418,10 +518,14 @@
 }
 
 @keyframes typing {
-  0%, 60%, 100% {
+
+  0%,
+  60%,
+  100% {
     transform: translateY(0);
     opacity: 0.7;
   }
+
   30% {
     transform: translateY(-10px);
     opacity: 1;
@@ -564,12 +668,16 @@
 }
 
 @keyframes shake {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateX(0);
   }
+
   25% {
     transform: translateX(-5px);
   }
+
   75% {
     transform: translateX(5px);
   }
@@ -656,4 +764,3 @@
 [data-theme='dark'] .suggestionButton:hover {
   background: rgba(255, 255, 255, 0.1);
 }
-
