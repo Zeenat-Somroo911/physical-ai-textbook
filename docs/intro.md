@@ -150,7 +150,7 @@ If you're experienced with ROS 2 and simulation:
 2. **Code along**: Don't just read—type out every code example
 3. **Experiment**: Modify examples and see what happens
 4. **Complete exercises**: Each chapter has hands-on exercises
-5. **Build projects**: Apply knowledge in the [Projects section](../projects/overview)
+5. **Build projects**: Apply knowledge in the [Projects section](projects/overview.md)
 
 ### Interactive Learning
 
@@ -210,7 +210,7 @@ The course culminates in building an **Autonomous Butler** robot that:
 - Plans and executes complex tasks
 - Operates autonomously
 
-See [Module 4, Chapter 6](../module-04-vla/06-capstone-project) for the complete guide.
+See [Module 4, Chapter 6](module-04-vla/06-capstone-project.md) for the complete guide.
 
 ## Cost Breakdown
 
@@ -232,7 +232,7 @@ See [Module 4, Chapter 6](../module-04-vla/06-capstone-project) for the complete
 Ready to begin? Here's what to do:
 
 1. **Read [Getting Started Guide](getting-started.md)**: Set up your environment
-2. **Start Module 1**: Begin with [ROS 2 Introduction](../module-01-ros2/01-introduction)
+2. **Start Module 1**: Begin with [ROS 2 Introduction](module-01-ros2/01-introduction.md)
 3. **Join the Community**: Connect with other learners
 4. **Build Something**: Start with simple projects and iterate
 

@@ -82,7 +82,7 @@ Thumbs.db
 
 # Generated documentation content (don't push to GitHub)
 # Note: If docs/ contains source content, remove this line
-docs/
+# docs/ (Removed to allow source content tracking)
 generated-content/
 
 # Vercel

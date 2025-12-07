@@ -118,7 +118,7 @@ source install/setup.bash
 - **Services**: Request-response (client → server)
 - **Actions**: Long-running tasks with feedback (client → server with progress)
 
-See [Module 1, Chapter 3](../module-01-ros2/03-services-actions) for details.
+See [Module 1, Chapter 3](module-01-ros2/03-services-actions.md) for details.
 
 ## Simulation Questions
 
@@ -149,7 +149,7 @@ Or use online converters or Gazebo's built-in conversion.
 
 ### Q19: Can I use Unity instead of Gazebo?
 
-**A:** Yes! See [Module 2, Chapter 5](../module-02-simulation/05-unity-integration) for Unity integration with ROS 2.
+**A:** Yes! See [Module 2, Chapter 5](module-02-simulation/05-unity-integration.md) for Unity integration with ROS 2.
 
 ## Computer Vision Questions
 

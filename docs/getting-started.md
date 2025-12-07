@@ -430,7 +430,7 @@ colcon build
 Once your environment is set up:
 
 1. **Verify Installation**: Run the test script above
-2. **Start Learning**: Begin with [Module 1: ROS 2 Fundamentals](../module-01-ros2/01-introduction)
+2. **Start Learning**: Begin with [Module 1: ROS 2 Fundamentals](module-01-ros2/01-introduction.md)
 3. **Build First Node**: Create your first ROS 2 node
 4. **Join Community**: Connect with other learners
 
@@ -452,5 +452,5 @@ If you encounter issues:
 
 ---
 
-**Ready to start building robots?** Head to [Module 1](../module-01-ros2/01-introduction)! 🤖
+**Ready to start building robots?** Head to [Module 1](module-01-ros2/01-introduction.md)! 🤖
 
