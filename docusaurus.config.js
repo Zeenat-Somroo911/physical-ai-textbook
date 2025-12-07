@@ -14,7 +14,7 @@ const config = {
   customFields: {
     // This URL will be used by the chatbot to connect to the backend
     // In production (Vercel), this should be the deployed backend URL
-    chatbotUrl: 'https://text-book-dqbke7rs-zeenat-somroos-projects.vercel.app',
+    chatbotUrl: 'https://text-book-zeenat-somroos-projects.vercel.app',
   },
 
   // GitHub Pages deployment configuration
