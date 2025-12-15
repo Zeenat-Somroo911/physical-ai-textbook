@@ -122,14 +122,6 @@ async def lifespan(app: FastAPI):
                 # Only create if strictly needed (ingest usually does this)
                 logger.info(f"Collection '{settings.qdrant_collection_name}' not found during startup.")
 
-    except Exception as e:
-        logger.critical(f"Startup Failed: {e}", exc_info=True)
-        # We don't raise here to allow app to start for Health Checks, 
-        # but qdrant_client will be None, causing 500s on chat.
-        # Ideally, we should raise.
-
-
-        
         # Initialize database pool using db.py
         await init_db_pool()
         logger.info("Database connection pool created")
