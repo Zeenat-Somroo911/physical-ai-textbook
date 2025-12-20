@@ -154,13 +154,13 @@ const ChatBot = () => {
 
     } catch (err) {
       console.error('Error sending message:', err);
-      setError(err.message || 'Failed to send message. Please try again.');
+      setError('An error occurred, please try again');
 
       // Add error message
       const errorMessage = {
         id: Date.now() + 1,
         role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again later.',
+        content: 'An error occurred, please try again',
         timestamp: new Date().toISOString(),
         isError: true,
       };

@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 import os
 
 # Load environment variables FIRST
-load_dotenv(override=True)
+load_dotenv(override=True) # Reload triggered
 
 from config import settings
 from models import (
@@ -89,38 +89,44 @@ async def lifespan(app: FastAPI):
             logger.info("HF Inference Client initialized")
         
         # 3. Initialize Qdrant client
-        # We DO NOT fallback to None silently anymore.
         if settings.mock_mode:
             logger.warning("Running in MOCK MODE - Qdrant disabled")
             qdrant_client = None
         else:
-            if settings.qdrant_api_key:
-                qdrant_client = QdrantClient(
-                    url=settings.qdrant_url,
-                    api_key=settings.qdrant_api_key
-                )
-            else:
-                qdrant_client = QdrantClient(url=settings.qdrant_url)
-            
-            # Connection Test
             try:
-                collections = qdrant_client.get_collections()
-                logger.info(f"Connected to Qdrant successfully. Found {len(collections.collections)} collections.")
-            except Exception as e:
-                logger.error(f"Failed Qdrant Connection Test: {e}")
-                raise e  # Propagate error to crash startup if DB is down (better than 500s later)
+                if settings.qdrant_api_key:
+                    qdrant_client = QdrantClient(
+                        url=settings.qdrant_url,
+                        api_key=settings.qdrant_api_key
+                    )
+                else:
+                    qdrant_client = QdrantClient(url=settings.qdrant_url)
+                
+                # Connection Test
+                try:
+                    collections = qdrant_client.get_collections()
+                    logger.info(f"Connected to Qdrant successfully. Found {len(collections.collections)} collections.")
+                except Exception as e:
+                    logger.error(f"Failed Qdrant Connection Test: {e}")
+                    qdrant_client = None
+                    logger.warning("Continuing without Qdrant - RAG features will not work")
 
-            # Determine Vector Size
-            vector_size = 384 
-            logger.info(f"Using HuggingFace Embeddings ({vector_size} dimensions)")
-            
-            # Ensure proper collection exists
-            try:
-                qdrant_client.get_collection(settings.qdrant_collection_name)
-                logger.info(f"Qdrant collection '{settings.qdrant_collection_name}' exists")
-            except Exception:
-                # Only create if strictly needed (ingest usually does this)
-                logger.info(f"Collection '{settings.qdrant_collection_name}' not found during startup.")
+                # Determine Vector Size
+                if qdrant_client:
+                    vector_size = 384 
+                    logger.info(f"Using HuggingFace Embeddings ({vector_size} dimensions)")
+                    
+                    # Ensure proper collection exists
+                    try:
+                        qdrant_client.get_collection(settings.qdrant_collection_name)
+                        logger.info(f"Qdrant collection '{settings.qdrant_collection_name}' exists")
+                    except Exception:
+                        # Only create if strictly needed (ingest usually does this)
+                        logger.info(f"Collection '{settings.qdrant_collection_name}' not found during startup.")
+            except Exception as e:
+                logger.error(f"Error initializing Qdrant: {e}", exc_info=True)
+                qdrant_client = None
+                logger.warning("Continuing without Qdrant - RAG features will not work")
 
         # Initialize database pool using db.py
         await init_db_pool()
@@ -270,6 +276,11 @@ async def retrieve_relevant_context(
         top_k = settings.top_k_results
     
     try:
+        # Check if Qdrant is available
+        if qdrant_client is None:
+            logger.warning("Qdrant client not available - skipping RAG retrieval")
+            return []
+        
         from qdrant_client.models import Filter, FieldCondition, MatchValue
         import asyncio
         
@@ -496,7 +507,7 @@ CHAT HISTORY:
                 # Use Gemini - hardcode model like generate_all_versions.py
                 import asyncio
                 # Use exact model name from working script (NOT from env)
-                model_name = "models/gemini-flash-latest"
+                model_name = "gemini-2.5-flash"
                 logger.info(f"Creating Gemini model with name: '{model_name}'")
                 model = genai.GenerativeModel(model_name)
                 response = await asyncio.to_thread(

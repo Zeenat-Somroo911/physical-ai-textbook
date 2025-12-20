@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     # Gemini Configuration
     gemini_api_key: Optional[str] = Field(None, env="GEMINI_API_KEY", description="Google Gemini API key")
     gemini_model: str = Field(
-        default="models/gemini-flash-latest",
+        default="gemini-2.5-flash",
         env="GEMINI_MODEL",
         description="Google Gemini model"
     )
